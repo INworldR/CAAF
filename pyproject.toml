@@ -28,16 +28,16 @@ dependencies = [
     "anthropic>=0.20.0",
     "requests>=2.31.0",
     "aiohttp>=3.8.0",
-    
+
     # Configuration & Data Handling
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
     "jsonlines>=4.0.0",
-    
+
     # Type Safety & Validation
     "typing-extensions>=4.7.0",
     "pydantic>=2.0.0",
-    
+
     # Async & Utilities
     "asyncio-throttle>=1.0.0",
     "rich>=13.0.0",  # For beautiful CLI output
@@ -52,14 +52,14 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.11.0",
     "pytest-xdist>=3.3.0",  # Parallel testing
-    
+
     # Code Quality
     "black>=23.7.0",
     "flake8>=6.0.0",
     "mypy>=1.5.0",
     "isort>=5.12.0",
     "ruff>=0.0.290",  # Fast linter alternative
-    
+
     # Development Tools
     "pre-commit>=3.3.0",
     "ipython>=8.14.0",
@@ -203,6 +203,8 @@ precision = 2
 [tool.ruff]
 target-version = "py311"
 line-length = 88
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -221,3 +223,8 @@ ignore = [
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/**/*" = ["S101", "ARG", "FBT"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.11",
+]

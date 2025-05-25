@@ -78,7 +78,7 @@ models:
     api_key: "your-claude-api-key"
     model: "claude-3-sonnet-20240229"
     max_tokens: 4000
-  
+
   ollama:
     base_url: "http://localhost:11434"
     models: ["llama3", "mistral", "codellama"]

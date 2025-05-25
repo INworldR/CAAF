@@ -12,7 +12,7 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Protocol, Union
+from typing import Any, Protocol
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -51,7 +51,7 @@ class Message(BaseModel):
     role: str = Field(..., description="Message role (user, assistant, system)")
     content: str = Field(..., description="Message content")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     class Config:
         """Pydantic configuration."""
@@ -64,13 +64,13 @@ class ConversationHistory(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     agent_id: str = Field(..., description="ID of the agent owning this conversation")
-    messages: List[Message] = Field(default_factory=list)
+    messages: list[Message] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     def add_message(
-        self, role: str, content: str, metadata: Optional[Dict[str, Any]] = None
+        self, role: str, content: str, metadata: dict[str, Any] | None = None
     ) -> Message:
         """Add a new message to the conversation."""
         message = Message(role=role, content=content, metadata=metadata or {})
@@ -78,7 +78,7 @@ class ConversationHistory(BaseModel):
         self.updated_at = datetime.utcnow()
         return message
 
-    def get_recent_messages(self, limit: int = 10) -> List[Message]:
+    def get_recent_messages(self, limit: int = 10) -> list[Message]:
         """Get the most recent messages from the conversation."""
         return self.messages[-limit:] if self.messages else []
 
@@ -92,7 +92,7 @@ class ModelInterface(Protocol):
     """Protocol defining the interface for AI models."""
 
     async def generate_response(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> str:
         """Generate a response from the model."""
         ...
@@ -110,14 +110,14 @@ class MemoryInterface(Protocol):
         ...
 
     async def retrieve_conversations(
-        self, agent_id: str, limit: Optional[int] = None
-    ) -> List[ConversationHistory]:
+        self, agent_id: str, limit: int | None = None
+    ) -> list[ConversationHistory]:
         """Retrieve conversations for an agent."""
         ...
 
     async def search_conversations(
         self, agent_id: str, query: str
-    ) -> List[ConversationHistory]:
+    ) -> list[ConversationHistory]:
         """Search conversations by content."""
         ...
 
@@ -145,8 +145,8 @@ class BaseAgent(ABC):
         agent_id: str,
         name: str,
         model: ModelInterface,
-        memory: Optional[MemoryInterface] = None,
-        config: Optional[Dict[str, Any]] = None,
+        memory: MemoryInterface | None = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         """
         Initialize the base agent.
@@ -168,7 +168,7 @@ class BaseAgent(ABC):
             self.memory = memory
             self.config = config or {}
             self.logger = logging.getLogger(f"caaf.agent.{agent_id}")
-            self.current_conversation: Optional[ConversationHistory] = None
+            self.current_conversation: ConversationHistory | None = None
             self._initialize_agent()
 
         except Exception as e:
@@ -176,12 +176,13 @@ class BaseAgent(ABC):
                 f"Failed to initialize agent {agent_id}: {e}"
             ) from e
 
+    @abstractmethod
     def _initialize_agent(self) -> None:
         """Initialize agent-specific components. Override in subclasses."""
         pass
 
     async def chat(
-        self, message: str, context: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self, message: str, context: dict[str, Any] | None = None, **kwargs: Any
     ) -> str:
         """
         Process a chat message and generate a response.
@@ -217,7 +218,7 @@ class BaseAgent(ABC):
                 )
 
             # Add user message to conversation
-            user_message = self.current_conversation.add_message(
+            self.current_conversation.add_message(
                 role="user", content=message.strip(), metadata=context or {}
             )
 
@@ -232,7 +233,7 @@ class BaseAgent(ABC):
             )
 
             # Add assistant response to conversation
-            assistant_message = self.current_conversation.add_message(
+            self.current_conversation.add_message(
                 role="assistant",
                 content=response,
                 metadata={"generation_params": kwargs},
@@ -247,12 +248,12 @@ class BaseAgent(ABC):
 
         except Exception as e:
             self.logger.error(f"Error in chat: {e}")
-            if isinstance(e, (AgentCommunicationError, AgentMemoryError)):
+            if isinstance(e, AgentCommunicationError | AgentMemoryError):
                 raise
             raise AgentCommunicationError(f"Failed to process chat message: {e}") from e
 
     async def _generate_response_with_retry(
-        self, messages: List[Dict[str, str]], max_retries: int = 3, **kwargs: Any
+        self, messages: list[dict[str, str]], max_retries: int = 3, **kwargs: Any
     ) -> str:
         """
         Generate response with retry logic for robustness.
@@ -297,7 +298,7 @@ class BaseAgent(ABC):
             f"Failed to generate response after {max_retries + 1} attempts"
         ) from last_error
 
-    def _prepare_model_messages(self) -> List[Dict[str, str]]:
+    def _prepare_model_messages(self) -> list[dict[str, str]]:
         """
         Prepare messages for the model interface.
 
@@ -317,7 +318,7 @@ class BaseAgent(ABC):
     async def add_memory(
         self,
         conversation: ConversationHistory,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Store a conversation in the agent's memory.
@@ -346,8 +347,8 @@ class BaseAgent(ABC):
             raise AgentMemoryError(f"Memory storage failed: {e}") from e
 
     async def get_conversation_history(
-        self, limit: Optional[int] = None, search_query: Optional[str] = None
-    ) -> List[ConversationHistory]:
+        self, limit: int | None = None, search_query: str | None = None
+    ) -> list[ConversationHistory]:
         """
         Retrieve conversation history from memory.
 
@@ -386,7 +387,7 @@ class BaseAgent(ABC):
             self.logger.error(f"Failed to retrieve conversation history: {e}")
             raise AgentMemoryError(f"Memory retrieval failed: {e}") from e
 
-    def get_current_conversation(self) -> Optional[ConversationHistory]:
+    def get_current_conversation(self) -> ConversationHistory | None:
         """
         Get the current active conversation.
 
@@ -396,7 +397,7 @@ class BaseAgent(ABC):
         return self.current_conversation
 
     def start_new_conversation(
-        self, metadata: Optional[Dict[str, Any]] = None
+        self, metadata: dict[str, Any] | None = None
     ) -> ConversationHistory:
         """
         Start a new conversation, storing the current one if it exists.
@@ -428,7 +429,7 @@ class BaseAgent(ABC):
 
     @abstractmethod
     async def process_message(
-        self, message: str, context: Optional[Dict[str, Any]] = None
+        self, message: str, context: dict[str, Any] | None = None
     ) -> str:
         """
         Process a message with agent-specific logic.
@@ -446,7 +447,7 @@ class BaseAgent(ABC):
         pass
 
     @abstractmethod
-    def get_agent_capabilities(self) -> Dict[str, Any]:
+    def get_agent_capabilities(self) -> dict[str, Any]:
         """
         Get the capabilities and configuration of this agent.
 
@@ -455,7 +456,7 @@ class BaseAgent(ABC):
         """
         pass
 
-    def get_agent_info(self) -> Dict[str, Any]:
+    def get_agent_info(self) -> dict[str, Any]:
         """
         Get basic information about this agent.
 

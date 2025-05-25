@@ -12,10 +12,10 @@ models:
     rate_limit:
       requests_per_minute: 50
       tokens_per_minute: 40000
-  
+
   ollama:
     base_url: "http://localhost:11434"
-    models: 
+    models:
       - "llama3"
       - "mistral"
       - "codellama"
@@ -32,18 +32,18 @@ agents:
   enable_learning: true
   memory_retention_days: 30
   max_conversation_length: 1000
-  
+
   # Agent-specific settings
   code_agent:
     model: "ollama:codellama"
     temperature: 0.3
     specialization: "code_generation"
-  
+
   research_agent:
     model: "claude"
     temperature: 0.5
     specialization: "research_analysis"
-  
+
   general_agent:
     model: "claude"
     temperature: 0.7
@@ -57,7 +57,7 @@ persistence:
   enable_search_index: true
   backup_enabled: true
   backup_interval_hours: 24
-  
+
   # JSON/JSONL settings
   conversation_format: "jsonl"  # json or jsonl
   compression: false
@@ -78,7 +78,7 @@ logging:
   rotation:
     max_size_mb: 10
     backup_count: 5
-  
+
   # Component-specific logging
   components:
     agents: "INFO"
