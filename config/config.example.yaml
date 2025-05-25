@@ -1,0 +1,138 @@
+# CAAF Configuration Example
+# Copy this file to config.yaml and adjust settings
+
+# Model Configuration
+models:
+  claude:
+    api_key: "your-claude-api-key-here"  # Get from: https://console.anthropic.com/
+    model: "claude-3-sonnet-20240229"
+    max_tokens: 4000
+    temperature: 0.7
+    timeout: 30
+    rate_limit:
+      requests_per_minute: 50
+      tokens_per_minute: 40000
+  
+  ollama:
+    base_url: "http://localhost:11434"
+    models: 
+      - "llama3"
+      - "mistral"
+      - "codellama"
+    timeout: 60
+    stream: true
+    options:
+      temperature: 0.7
+      top_p: 0.9
+      num_ctx: 4096
+
+# Agent Configuration
+agents:
+  default_model: "claude"  # Default model for new agents
+  enable_learning: true
+  memory_retention_days: 30
+  max_conversation_length: 1000
+  
+  # Agent-specific settings
+  code_agent:
+    model: "ollama:codellama"
+    temperature: 0.3
+    specialization: "code_generation"
+  
+  research_agent:
+    model: "claude"
+    temperature: 0.5
+    specialization: "research_analysis"
+  
+  general_agent:
+    model: "claude"
+    temperature: 0.7
+    specialization: "general_conversation"
+
+# Persistence Configuration
+persistence:
+  base_dir: "./data"
+  conversations_dir: "./data/conversations"
+  agents_dir: "./data/agents"
+  enable_search_index: true
+  backup_enabled: true
+  backup_interval_hours: 24
+  
+  # JSON/JSONL settings
+  conversation_format: "jsonl"  # json or jsonl
+  compression: false
+  max_file_size_mb: 100
+
+# Communication Configuration
+communication:
+  enable_inter_agent: true
+  message_timeout: 30
+  max_retry_attempts: 3
+  enable_broadcasting: false
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "./logs/caaf.log"
+  rotation:
+    max_size_mb: 10
+    backup_count: 5
+  
+  # Component-specific logging
+  components:
+    agents: "INFO"
+    models: "INFO"
+    persistence: "DEBUG"
+    communication: "INFO"
+
+# Search Configuration
+search:
+  enable_full_text: true
+  index_refresh_interval: 300  # seconds
+  max_search_results: 100
+  enable_semantic_search: false  # Future feature
+
+# Performance Configuration
+performance:
+  async_enabled: true
+  max_concurrent_requests: 5
+  cache_enabled: true
+  cache_ttl_seconds: 3600
+
+# Security Configuration
+security:
+  enable_api_key_validation: true
+  mask_sensitive_data: true
+  allowed_file_extensions: [".txt", ".md", ".json", ".yaml", ".yml"]
+  max_upload_size_mb: 10
+
+# Development Configuration
+development:
+  debug_mode: false
+  enable_profiling: false
+  mock_api_responses: false
+  test_data_dir: "./test_data"
+
+# Feature Flags
+features:
+  enable_web_search: false
+  enable_file_operations: true
+  enable_code_execution: false  # Security consideration
+  enable_plugin_system: false  # Future feature
+  enable_multi_user: false
+
+# API Configuration (if running as service)
+api:
+  host: "localhost"
+  port: 8000
+  cors_enabled: true
+  rate_limiting: true
+  authentication: false
+
+# Monitoring Configuration
+monitoring:
+  enable_metrics: false
+  metrics_port: 9090
+  enable_health_check: true
+  health_check_interval: 60
