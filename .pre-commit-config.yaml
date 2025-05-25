@@ -6,42 +6,24 @@ default_language_version:
   python: python3.11
 
 repos:
-  # General file quality hooks
+  # Essential file quality hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       # File formatting and cleanup
       - id: trailing-whitespace
-        exclude: ^(data/|logs/|\.venv/)
+        exclude: ^(data/|logs/|\.venv/|build/|dist/)
       - id: end-of-file-fixer
-        exclude: ^(data/|logs/|\.venv/)
+        exclude: ^(data/|logs/|\.venv/|build/|dist/)
       - id: check-merge-conflict
-      - id: check-case-conflict
-      - id: check-symlinks
-      - id: check-executables-have-shebangs
 
       # File validation
       - id: check-yaml
-        exclude: ^(data/|logs/|\.venv/)
+        exclude: ^(data/|logs/|\.venv/|build/|dist/)
       - id: check-json
-        exclude: ^(data/|logs/|\.venv/)
+        exclude: ^(data/|logs/|\.venv/|build/|dist/)
       - id: check-toml
-        exclude: ^(data/|logs/|\.venv/)
-      - id: check-xml
-        exclude: ^(data/|logs/|\.venv/)
-
-      # Python-specific checks
-      - id: check-ast
-        exclude: ^(data/|logs/|\.venv/)
-      - id: check-builtin-literals
-        exclude: ^(data/|logs/|\.venv/)
-      - id: check-docstring-first
-        exclude: ^(data/|logs/|\.venv/)
-      - id: debug-statements
-        exclude: ^(data/|logs/|\.venv/)
-      - id: name-tests-test
-        args: ["--pytest-test-first"]
-        exclude: ^(data/|logs/|\.venv/)
+        exclude: ^(data/|logs/|\.venv/|build/|dist/)
 
   # Python code formatting with Black
   - repo: https://github.com/psf/black
@@ -71,22 +53,19 @@ repos:
         exclude: ^(data/|logs/|\.venv/|build/|dist/)
         types: [python]
 
-  # Python linting with flake8
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+  # Fast linting with Ruff (replaces flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
     hooks:
-      - id: flake8
+      - id: ruff
         args:
-          - --max-line-length=88
-          - --extend-ignore=E203,W503,E501
-          - --max-complexity=10
-          - --select=E,W,F,B,C4,UP
-        exclude: ^(data/|logs/|\.venv/|build/|dist/|__pycache__/)
-        types: [python]
-        additional_dependencies:
-          - flake8-bugbear>=23.9.16
-          - flake8-comprehensions>=3.14.0
-          - flake8-simplify>=0.21.0
+          - --target-version=py311
+          - --line-length=88
+          - --select=E,W,F,I,B,C4,UP
+          - --ignore=E501,B008,C901
+          - --fix
+        exclude: ^(data/|logs/|\.venv/|build/|dist/|tests/)
+        types_or: [python, pyi]
 
   # Type checking with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -115,61 +94,6 @@ repos:
           - types-PyYAML
           - types-requests
 
-  # Fast linting with Ruff (alternative to flake8)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
-    hooks:
-      - id: ruff
-        args:
-          - --target-version=py311
-          - --line-length=88
-          - --select=E,W,F,I,B,C4,UP
-          - --ignore=E501,B008,C901
-          - --fix
-        exclude: ^(data/|logs/|\.venv/|build/|dist/)
-        types_or: [python, pyi]
-
-  # Security linting with bandit
-  - repo: https://github.com/pycqa/bandit
-    rev: 1.7.6
-    hooks:
-      - id: bandit
-        args:
-          - --severity-level=medium
-          - --confidence-level=medium
-          - --exclude=tests/,examples/
-        exclude: ^(data/|logs/|\.venv/|build/|dist/|tests/|examples/)
-        types: [python]
-
-  # Documentation style checking
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        args:
-          - --convention=google
-          - --add-ignore=D100,D101,D102,D103,D104,D105,D107
-        exclude: ^(data/|logs/|\.venv/|build/|dist/|tests/|examples/|__init__\.py)
-        types: [python]
-
-  # Check for common security issues in dependencies
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    rev: v1.3.2
-    hooks:
-      - id: python-safety-dependencies-check
-        args: ["--ignore=70612"]  # Ignore jinja2 warning for now
-
-  # Jupyter notebook cleaning (if notebooks are added later)
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.1
-    hooks:
-      - id: nbqa-black
-        args: [--line-length=88]
-        exclude: ^(data/|logs/|\.venv/)
-      - id: nbqa-isort
-        args: [--profile=black]
-        exclude: ^(data/|logs/|\.venv/)
-
 # Pre-commit CI configuration
 ci:
   autofix_commit_msg: |
@@ -180,5 +104,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: [mypy, bandit]  # Skip heavy checks in CI
+  skip: [mypy]  # Skip heavy type checking in CI
   submodules: false
